@@ -13,13 +13,13 @@ Introduction
 NFC Provisioning app is nothing but an ordinary Android Beam app that just sends out provisioning
 values to the peer device. This sample uses the values below.
 
-* [EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME] - The package name of the mobile device management
+* `EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME` - The package name of the mobile device management
   application that will be set as the profile owner or device owner.
-* [EXTRA_PROVISIONING_LOCALE] - The Locale that the device will be set to.
-* [EXTRA_PROVISIONING_TIME_ZONE] - The time zone AlarmManager that the device will be set to.
-* [EXTRA_PROVISIONING_WIFI_SSID] - The ssid of the wifi network that should be used during nfc
+* `EXTRA_PROVISIONING_LOCALE` - The Locale that the device will be set to.
+* `EXTRA_PROVISIONING_TIME_ZONE` - The time zone AlarmManager that the device will be set to.
+* `EXTRA_PROVISIONING_WIFI_SSID` - The ssid of the wifi network that should be used during nfc
   device owner provisioning for downloading the mobile device management application.
-* [EXTRA_PROVISIONING_WIFI_PASSWORD] - The password of the wifi network in
+* `EXTRA_PROVISIONING_WIFI_PASSWORD` - The password of the wifi network in
   EXTRA_PROVISIONING_WIFI_SSID.
 
 Store values in an instance of Properties. Get a byte array representation of the Properties using
@@ -28,13 +28,13 @@ ByteArrayOutputStream. Create an NdefRecord with the MIME type of
 the NdefMessage as the message to be sent.
 
 [1]: https://developer.android.com/reference/android/app/admin/DevicePolicyManager.html#MIME_TYPE_PROVISIONING_NFC
-[2]: http://developer.android.com/reference/android/nfc/NfcAdapter.html#setNdefPushMessage(android.nfc.NdefMessage, android.app.Activity, android.app.Activity...)
+[2]: http://developer.android.com/reference/android/nfc/NfcAdapter.html#setNdefPushMessage(android.nfc.NdefMessage,%20android.app.Activity,%20android.app.Activity...)
 
 Pre-requisites
 --------------
 
 - Android SDK 25
-- Android Build Tools v25.0.2
+- Android Build Tools v25.0.3
 - Android Support Repository
 
 Screenshots
@@ -63,7 +63,7 @@ submitting a pull request through GitHub. Please see CONTRIBUTING.md for more de
 License
 -------
 
-Copyright 2016 The Android Open Source Project, Inc.
+Copyright 2017 The Android Open Source Project, Inc.
 
 Licensed to the Apache Software Foundation (ASF) under one or more contributor
 license agreements.  See the NOTICE file distributed with this work for

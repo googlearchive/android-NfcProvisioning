@@ -33,6 +33,14 @@ limitations under the License.
             android:inputType="textNoSuggestions"/>
 
         <EditText
+            android:id="@+id/class_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_small"
+            android:hint="@string/hint_class_name"
+            android:inputType="textNoSuggestions"/>
+
+        <EditText
             android:id="@+id/locale"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -49,7 +49,7 @@ public class TextWatcherWrapper implements TextWatcher {
     }
 
     public interface OnTextChangedListener {
-        public void onTextChanged(int id, String s);
+        void onTextChanged(int id, String s);
     }
 
 }

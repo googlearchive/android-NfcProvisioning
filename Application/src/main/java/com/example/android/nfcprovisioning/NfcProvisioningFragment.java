@@ -18,10 +18,12 @@ package com.example.android.nfcprovisioning;
 
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -55,6 +57,7 @@ public class NfcProvisioningFragment extends Fragment implements
 
     // View references
     private EditText mEditPackageName;
+    private EditText mEditClassName;
     private EditText mEditLocale;
     private EditText mEditTimezone;
     private EditText mEditWifiSsid;
@@ -74,6 +77,7 @@ public class NfcProvisioningFragment extends Fragment implements
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         // Retrieve view references
         mEditPackageName = (EditText) view.findViewById(R.id.package_name);
+        mEditClassName = (EditText) view.findViewById(R.id.class_name);
         mEditLocale = (EditText) view.findViewById(R.id.locale);
         mEditTimezone = (EditText) view.findViewById(R.id.timezone);
         mEditWifiSsid = (EditText) view.findViewById(R.id.wifi_ssid);
@@ -81,12 +85,15 @@ public class NfcProvisioningFragment extends Fragment implements
         mEditWifiPassword = (EditText) view.findViewById(R.id.wifi_password);
         // Bind event handlers
         mEditPackageName.addTextChangedListener(new TextWatcherWrapper(R.id.package_name, this));
+        mEditClassName.addTextChangedListener(new TextWatcherWrapper(R.id.class_name, this));
         mEditLocale.addTextChangedListener(new TextWatcherWrapper(R.id.locale, this));
         mEditTimezone.addTextChangedListener(new TextWatcherWrapper(R.id.timezone, this));
         mEditWifiSsid.addTextChangedListener(new TextWatcherWrapper(R.id.wifi_ssid, this));
         mEditWifiSecurityType.addTextChangedListener(
                 new TextWatcherWrapper(R.id.wifi_security_type, this));
         mEditWifiPassword.addTextChangedListener(new TextWatcherWrapper(R.id.wifi_password, this));
+        // Prior to API 23, the class name is not needed
+        mEditClassName.setVisibility(Build.VERSION.SDK_INT >= 23 ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -117,9 +124,14 @@ public class NfcProvisioningFragment extends Fragment implements
                     if (!value.startsWith("\"") || !value.endsWith("\"")) {
                         value = "\"" + value + "\"";
                     }
-                } else {
-                    value = e.getValue();
-                }
+                } else //noinspection deprecation
+                    if (e.getKey().equals(
+                            DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME)
+                            && Build.VERSION.SDK_INT >= 23) {
+                        continue;
+                    } else {
+                        value = e.getValue();
+                    }
                 properties.put(e.getKey(), value);
             }
         }
@@ -147,8 +159,27 @@ public class NfcProvisioningFragment extends Fragment implements
         }
         switch (id) {
             case R.id.package_name:
+                //noinspection deprecation
                 mProvisioningValues.put(
                         DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, s);
+                break;
+            case R.id.class_name:
+                if (Build.VERSION.SDK_INT >= 23) {
+                    if (TextUtils.isEmpty(s)) {
+                        mProvisioningValues.remove(
+                                DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME);
+                    } else {
+                        // On API 23 and above, we can use
+                        // EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME to specify the receiver
+                        // in the device owner app. If the provisioning values contain this key,
+                        // EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME is not read.
+                        String packageName = mEditPackageName.getText().toString();
+                        ComponentName name = new ComponentName(packageName, s);
+                        mProvisioningValues.put(
+                                DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                                name.flattenToShortString());
+                    }
+                }
                 break;
             case R.id.locale:
                 mProvisioningValues.put(DevicePolicyManager.EXTRA_PROVISIONING_LOCALE, s);
@@ -181,14 +212,21 @@ public class NfcProvisioningFragment extends Fragment implements
     public void onLoadFinished(Loader<Map<String, String>> loader, Map<String, String> values) {
         if (loader.getId() == LOADER_PROVISIONING_VALUES) {
             mProvisioningValues = values;
+            //noinspection deprecation
             mEditPackageName.setText(values.get(
                     DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME));
+            if (Build.VERSION.SDK_INT >= 23) {
+                ComponentName name = ComponentName.unflattenFromString(values.get(
+                        DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME));
+                mEditClassName.setText(name.getClassName());
+            }
             mEditLocale.setText(values.get(DevicePolicyManager.EXTRA_PROVISIONING_LOCALE));
             mEditTimezone.setText(values.get(DevicePolicyManager.EXTRA_PROVISIONING_TIME_ZONE));
             mEditWifiSsid.setText(values.get(DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID));
             mEditWifiSecurityType.setText(values.get(
                     DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE));
-            mEditWifiPassword.setText(null);
+            mEditWifiPassword.setText(values.get(
+                    DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASSWORD));
         }
     }
 

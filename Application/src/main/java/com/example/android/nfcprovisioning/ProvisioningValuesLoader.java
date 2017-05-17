@@ -21,6 +21,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Environment;
 import android.support.v4.content.AsyncTaskLoader;
 
@@ -111,9 +112,7 @@ public class ProvisioningValuesLoader extends AsyncTaskLoader<Map<String, String
     }
 
     private void loadFromFile(HashMap<String, String> values, File file) throws IOException {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(file));
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while (null != (line = reader.readLine())) {
                 if (line.startsWith("#")) {
@@ -128,17 +127,12 @@ public class ProvisioningValuesLoader extends AsyncTaskLoader<Map<String, String
                 values.put(key, value);
                 Log.d(TAG, key + "=" + value);
             }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
         }
     }
 
     private void gatherAdminExtras(HashMap<String, String> values) {
-        HashMap<String, String> newMap = new HashMap<String, String>();
         Properties props = new Properties();
-        Set<String>keys = new HashSet(values.keySet());
+        Set<String> keys = new HashSet<>(values.keySet());
         for (String key : keys) {
             if (key.startsWith("android.app.extra")) {
                 continue;
@@ -160,17 +154,25 @@ public class ProvisioningValuesLoader extends AsyncTaskLoader<Map<String, String
 
     private void loadSystemValues(HashMap<String, String> values) {
         Context context = getContext();
+        //noinspection deprecation
         putIfMissing(values, DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME,
                 "com.example.android.deviceowner");
+        if (Build.VERSION.SDK_INT >= 23) {
+            putIfMissing(values, DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                    "com.example.android.deviceowner/.DeviceOwnerReceiver");
+        }
         putIfMissing(values, DevicePolicyManager.EXTRA_PROVISIONING_LOCALE,
-                context.getResources().getConfiguration().locale.toString());
+                CompatUtils.getPrimaryLocale(context.getResources().getConfiguration()).toString());
         putIfMissing(values, DevicePolicyManager.EXTRA_PROVISIONING_TIME_ZONE,
                 TimeZone.getDefault().getID());
         if (!values.containsKey(DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID)) {
             WifiManager wifiManager = (WifiManager) context
                     .getSystemService(Activity.WIFI_SERVICE);
             WifiInfo info = wifiManager.getConnectionInfo();
-            values.put(DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID, trimSsid(info.getSSID()));
+            if (info.getNetworkId() != -1) { // Connected to network
+                values.put(DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID,
+                        trimSsid(info.getSSID()));
+            }
         }
     }
 
